@@ -385,7 +385,7 @@ interactive_imr_mmr_gdp <- reactable(
 # Maternal Mortality Ratio (MMR): 2015
 
 
-## Row 1 {height=25%}
+## Row 1 {height=30%}
 
 
 ```{r}
@@ -430,7 +430,7 @@ value_box(
 ```
 
 
-## Row 2 {height=75%}
+## Row 2 {height=70%}
 
 ### {width=35%}
 
@@ -464,7 +464,7 @@ mmr_2015_map_ggplotly
 
 # Infant Mortality Rate (IMR): 2015
 
-## Row 1 {height=25%}
+## Row 1 {height=30%}
 
 ```{r}
 value_box(
@@ -508,7 +508,7 @@ value_box(
 ```
 
 
-## Row 2 {height=75%}
+## Row 2 {height=70%}
 
 ### {width=60%}
 
