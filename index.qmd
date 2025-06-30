@@ -631,14 +631,14 @@ Explore their data repository here: https://www.gapminder.org/data/
 
 **Datasets Included**
 
-1. GDP per Capita (2015):
+1. GDP per Capita:
 Reflects the average economic output per person in US dollars, adjusted for price and inflation, offering insight into the economic well-being of countries worldwide.
 
-2. Infant Mortality Rate (2015):
-Measures the number of infant deaths (under 1 year of age) per 1,000 live births in 2015. This is a crucial indicator of child health and the quality of healthcare systems.
+2. Infant Mortality Rate:
+Measures the number of infant deaths (under 1 year of age) per 1,000 live births. This is a crucial indicator of child health and the quality of healthcare systems.
 
-3. Maternal Mortality Ratio (2015):
-Indicates the number of maternal deaths per 100,000 live births in 2015, reflecting maternal healthcare quality and overall health system effectiveness.Maternal deaths include any death of a woman while pregnant or within 42 days following termination of pregnancy — regardless of pregnancy duration or site — caused by pregnancy-related factors or their management, excluding accidental or incidental causes. The age range considered is 15 to 49 years.
+3. Maternal Mortality Ratio:
+Indicates the number of maternal deaths per 100,000 live births, reflecting maternal healthcare quality and overall health system effectiveness.Maternal deaths include any death of a woman while pregnant or within 42 days following termination of pregnancy — regardless of pregnancy duration or site — caused by pregnancy-related factors or their management, excluding accidental or incidental causes. The age range considered is 15 to 49 years.
 
 
 
