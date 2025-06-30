@@ -298,7 +298,7 @@ imr_gdp_plot <-
              y = infant_mortality_rate)) +
   geom_point(aes(colour = infant_mortality_rate,
              text = country),
-             alpha = 0.7,
+             alpha = 0.6,
              size = 3) +
   scale_color_gradient(
     low = "#B2DFDB",   
@@ -323,7 +323,7 @@ mmr_gdp_plot <-
              y = maternal_mortality_ratio)) +
   geom_point(aes(colour = maternal_mortality_ratio,
              text = country),
-             alpha = 0.7,
+             alpha = 0.5,
              size = 3) +
   scale_color_gradient(
     low = "#b2dfdb",   
@@ -334,7 +334,7 @@ mmr_gdp_plot <-
   labs(
     title = "GDP vs Maternal Mortality Ratio (2015)",
     x = "GDP per Capita (log scale)",
-    y = "Infant Mortality Rate (per 100,000 live births)"
+    y = "Maternal Mortality Ratio (per 100,000 live births)"
   ) +
    theme_minimal() +
    theme(legend.position = "none")
@@ -421,7 +421,7 @@ value_box(
     tags$span(style = "font-size: 32px;", paste0(average_global_mmr_2015, " deaths")),
     tags$div(
       style = "font-size: 13px; line-height: 1.2; margin-top: 2px;",
-      HTML("per 1000 live births")
+      HTML("per 100,000 live births")
     )
   ),
   showcase = bsicons::bs_icon("file-medical"),
@@ -521,13 +521,14 @@ top_botton_imr_bar_chart
 
 ::: {.callout-note title="Key Insights on Infant Mortality Rates"}
 
-- The **global average Infant Mortality Rate (IMR)** in 2015 was **24 deaths per 1,000 live births**.
+- The **global average Infant Mortality Rate (IMR)** in 2015 was **24 deaths per 1,000 live births**. 
 
-- **Angola**, **Central African Republic**, and **Sierra Leone** recorded the **highest IMRs**, exceeding **85 deaths per 1,000** indicating the Sub-Saharan African countries dominate the high IMR group.
+- **Angola**, **Central African Republic**, and **Sierra Leone** recorded the **highest IMRs**, exceeding **85 deaths per 1,000** indicating the Sub-Saharan African countries dominate the high IMR group. 
 
-- In contrast, countries like **Luxembourg**, **Iceland**, and **Finland** reported **IMRs below 2**.
+- In contrast, countries like **Luxembourg**, **Iceland**, and **Finland** reported **IMRs below 2**. 
 
 - These extremes illustrate a substantial **inequality in child survival outcomes** across the world; however, the data is from 2015 that may not reflect post-COVID19 pandemic changes.
+
 
 :::
 
@@ -560,9 +561,9 @@ interactive_imr_mmr_gdp
 
 ::: {.callout-note title="Summary of Observed Trends"}
 
-- Countries with **lower GDP per capita** generally show **higher infant and maternal mortality rates**.
+- Countries with **lower GDP per capita** generally show **higher infant mortality rates and maternal mortality ratios**.
 
-- *High-income countries* tend to cluster at the lower end of mortality rates.
+- *High-income countries* tend to cluster at the lower end of mortality rates and ratios.
 
 - The **relationship is not perfectly linear**, with a few exceptions.
 
