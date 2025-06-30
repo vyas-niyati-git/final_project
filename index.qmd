@@ -1,6 +1,8 @@
 ---
 title: "GAPMINDER | Maternal Mortality and Infant Mortality 2015"
-format: dashboard
+format: 
+  dashboard:
+    embed-resources: true
 theme: Flatly
 ---
 
