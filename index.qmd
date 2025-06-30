@@ -1,0 +1,641 @@
+---
+title: "GAPMINDER | Maternal Mortality and Infant Mortality 2015"
+format: dashboard
+theme: Flatly
+---
+
+```{r}
+#Load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+               gapminder,
+               here,
+               bslib,
+               bsicons,
+               shiny,
+               rnaturalearth,
+               plotly,
+               countrycode,
+               htmltools,
+               reactable)
+
+```
+
+```{r}
+library(tidyr)
+
+#Importing Maternal Mortality Ratio(MMR) dataset
+maternal_mortality <- read_csv(here("data/mmr_ihme.csv"))
+
+#Converting the dataset to the longer format before filtering it to year 2015
+maternal_mortality_long <- maternal_mortality %>%
+  pivot_longer(
+    cols = -country,               
+    names_to = "year",             
+    values_to = "maternal_mortality_ratio"  
+  )
+
+maternal_mortality_long <- maternal_mortality_long %>%
+  mutate(year = as.numeric(year))
+
+mmr_2015 <- maternal_mortality_long %>%
+  filter(year == 2015)
+
+#Removing the year column as the MMR data across all the countries belong to the year 2015
+mmr_2015 <- mmr_2015 %>%
+  select(-year)
+```
+
+```{r}
+#Highest and lowest MMR values along with the country type
+average_global_mmr_2015 <- mean(mmr_2015$maternal_mortality_ratio, na.rm = TRUE) %>% 
+  round(0)
+
+highest_mmr_value_2015 <- mmr_2015 %>% 
+  arrange(-maternal_mortality_ratio) %>% 
+  head(1) %>% 
+  pull(maternal_mortality_ratio) %>% 
+  round(1)
+
+highest_mmr_value_country <- mmr_2015 %>% 
+  arrange(-maternal_mortality_ratio) %>% 
+  head(1) %>% 
+  pull(country)
+
+lowest_mmr_value_2015 <- mmr_2015 %>% 
+  arrange(maternal_mortality_ratio) %>% 
+  head(1) %>% 
+  pull(maternal_mortality_ratio) %>% 
+  round(1)
+
+lowest_mmr_value_country <- mmr_2015 %>% 
+  arrange(maternal_mortality_ratio) %>% 
+  head(1) %>% 
+  pull(country)
+
+```
+
+```{r}
+#Map of countries with Maternal Mortality Ratio 
+country_shapes <- rnaturalearth::ne_countries()
+
+#ggplot(country_shapes) +
+ #geom_sf()
+
+mmr_2015 <- mmr_2015 %>% 
+  mutate(country_code = countrycode(country, 
+                                    "country.name", 
+                                    "iso3c" ))
+
+#checking the unique values across both the datasets
+#setdiff(country_shapes$adm0_a3, mmr_2015$country_code)
+#setdiff(mmr_2015$country_code, country_shapes$adm0_a3)
+
+#Filtering MMR datasets to keep only countries that can joined with the countryshapes (.shp) file
+mmr_2015_filtered <- mmr_2015 %>%
+  filter(country_code %in% country_shapes$adm0_a3)
+
+#Joining the datasets
+mmr_2015_joined <- left_join(country_shapes, mmr_2015_filtered, by = c("adm0_a3" = "country_code")) %>% 
+  mutate(tooltip_label = paste(country, round(maternal_mortality_ratio, 1), sep = ": "))
+
+#colnames(mmr_2015_joined)
+
+# checking if tootip_label apperas in the joined dataset
+
+#mmr_2015_joined %>%
+  #select(country, maternal_mortality_ratio, tooltip_label) %>%
+  #slice(1:10) %>%
+  #print()
+
+mmr_2015_map <- ggplot(data = mmr_2015_joined) + 
+  geom_sf(aes(fill = maternal_mortality_ratio, text = tooltip_label)) +
+  scale_fill_gradient(
+    low = "#b2dfdb",
+    high = "#b71c1c",
+    na.value = "grey50"
+  ) +
+  theme(legend.position = "none")
+
+mmr_2015_map_ggplotly <- ggplotly(mmr_2015_map, tooltip = "text")
+
+```
+
+```{r}
+#Maternal Mortality Ratio of the top 20 countries in 2015
+top_countries <-  mmr_2015 %>% 
+  arrange(desc(maternal_mortality_ratio)) %>% 
+  head(20) %>% 
+  mutate(tooltip_label = paste(country,
+                               round(maternal_mortality_ratio, 1),
+                               sep = ": ")) %>% 
+  ggplot(aes(y = reorder(country, maternal_mortality_ratio),
+             x = maternal_mortality_ratio,
+             fill = maternal_mortality_ratio,
+             text = tooltip_label)) +
+  geom_col() +
+  geom_text(aes(label = round(maternal_mortality_ratio, 1)),
+            nudge_x = -50,
+            color = "white")+
+  scale_fill_gradient(
+    low = "#b2dfdb",
+  high = "#b71c1c",
+  limits = range(mmr_2015$maternal_mortality_ratio, na.rm = TRUE)
+  ) +
+  labs(y = " ",
+       x = "Maternal Mortality Ratio \n(per 100,000 live births)") +
+  theme(legend.position = "none")
+
+top_20_ggplotly <- ggplotly(top_countries, tooltip = "text")
+```
+
+```{r}
+#Importing the Infant Mortality Rate(IMR) dataset
+infant_mortality <- read_csv(here("data/infant_mortality_rate_per_1000_births.csv"))
+
+infant_mortality_long <- infant_mortality %>%
+  pivot_longer(
+    cols = -country,               
+    names_to = "year",             
+    values_to = "infant_mortality_rate"  
+  )
+
+infant_mortality_long <- infant_mortality_long %>%
+  mutate(year = as.numeric(year))
+
+imr_2015 <- infant_mortality_long %>%
+  filter(year == 2015)
+
+
+```
+
+```{r}
+# Averafe Infant Mortality Rate in 2015
+average_global_imr_2015 <- mean(imr_2015$infant_mortality_rate, na.rm = TRUE) %>% 
+  round(0)
+
+#Highest and Lowest IMR values
+highest_imr_value_2015 <- imr_2015 %>% 
+  arrange(-infant_mortality_rate) %>% 
+  head(1) %>% 
+  pull(infant_mortality_rate) %>% 
+  round(1)
+
+highest_imr_value_country <- imr_2015 %>% 
+  arrange(-infant_mortality_rate) %>% 
+  head(1) %>% 
+  pull(country)
+
+lowest_imr_value_2015 <- imr_2015 %>% 
+  arrange(infant_mortality_rate) %>% 
+  head(1) %>% 
+  pull(infant_mortality_rate) %>% 
+  round(1)
+
+lowest_imr_value_country <- imr_2015 %>% 
+  arrange(infant_mortality_rate) %>% 
+  head(1) %>% 
+  pull(country)
+
+```
+
+
+```{r}
+# Horizontal bar chart ranking the countries by  IMR, highlighting the top 5 and lowets countries and adding a vertical line for the global average IMR
+imr_cleaned <- imr_2015 %>%
+  filter(!is.na(infant_mortality_rate))
+
+top5 <- imr_cleaned %>%
+  arrange(-infant_mortality_rate) %>%
+  slice_head(n = 5)
+
+bottom5 <- imr_cleaned %>%
+  arrange(infant_mortality_rate) %>%
+  slice_head(n = 5)
+
+#combining the data from both the top 5 and bottom 5 countries
+combined_data_imr <- bind_rows(top5, bottom5) %>%
+  mutate(
+    group = ifelse(infant_mortality_rate > average_global_imr_2015, "Above Average", "Below Average"),
+    country = reorder(country, infant_mortality_rate),
+    label_rounded = round(infant_mortality_rate, 1)
+  )
+
+#Top 5 and Bottom 5 countries with mortality rates along with average IMR
+top_botton_imr_bar_chart <- ggplot(combined_data_imr, aes(
+  x = infant_mortality_rate, 
+  y = country,
+  fill = group)) +
+  geom_col(color = "#C62828", width = 0.7) +
+  scale_fill_manual(values = c(
+  "Above Average" = "#455A64",  
+  "Below Average" = "#B2DFDB"   
+)) +
+  geom_vline(xintercept = average_global_imr_2015, 
+             linetype = "dotted", 
+             color = "#C62828", 
+             size = 1) +
+  geom_text(aes(label = label_rounded),
+            hjust = -0.1, size = 3.5) +
+   labs(
+    title = "Top 5 Highest and Lowest Infant Mortality Rates \n by Country (2015)",
+    subtitle = paste("Global average IMR:", round(average_global_imr_2015, 1), "deaths/1,000 live births"),
+    x = "Infant Mortality Rate (per 1,000 live births)",
+    y = NULL
+  ) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.2))) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text.y = element_text(size = 12),
+    axis.text.x = element_text(size = 10)
+  )
+```
+
+
+```{r}
+#Importing and cleaning the GDP dataset
+gdp_df <- read_csv(here("data/gdp_pcap.csv"))
+
+gdp_clean <- gdp_df %>%
+  mutate(across(-country, 
+                ~ ifelse(
+    str_detect(., "k"),
+    as.numeric(str_replace(., "k", "")) * 1000,
+    as.numeric(.)
+  )))
+
+gdp_long <- gdp_clean %>%
+  pivot_longer(
+    cols = -country,
+    names_to = "year",
+    values_to = "gdp_per_capita"
+  ) %>%
+  mutate(year = as.integer(year)
+         )
+
+gdp_2015 <- gdp_long %>%
+  filter(year == 2015)
+
+#Combining the data sets (GDP 2015 and IMR 2015)
+gdp_imr <- gdp_2015 %>% 
+  left_join(imr_2015, by = "country") %>%
+  select(-year.x, -year.y)
+
+#combining the GDP and IMR dataset with the MMR 2015 dataset
+gdp_imr_mmr <- gdp_imr %>% 
+  left_join(mmr_2015, by = "country") %>% 
+  select(-country_code)  
+```
+
+```{r}
+#Exploring the link between GDP and IMR (2015)
+imr_gdp_plot <- 
+  ggplot(data = gdp_imr_mmr,
+         aes(x = gdp_per_capita,
+             y = infant_mortality_rate)) +
+  geom_point(aes(colour = infant_mortality_rate,
+             text = country),
+             alpha = 0.7,
+             size = 3) +
+  scale_color_gradient(
+    low = "#B2DFDB",   
+    high = "#455A64",  
+    na.value = "grey80"
+  ) + 
+  scale_x_log10() +
+  labs(
+    title = "GDP vs Infant Mortality Rate (2015)",
+    x = "GDP per Capita (log scale)",
+    y = "Infant Mortality Rate (per 1,000 live births)"
+  ) +
+   theme_minimal() +
+   theme(legend.position = "none")
+
+imr_gdp_plotly <- ggplotly(imr_gdp_plot, tooltip = c("text", "x", "y"))
+
+#Exploring the link between GDP and MMR (2015)
+mmr_gdp_plot <- 
+  ggplot(data = gdp_imr_mmr,
+         aes(x = gdp_per_capita,
+             y = maternal_mortality_ratio)) +
+  geom_point(aes(colour = maternal_mortality_ratio,
+             text = country),
+             alpha = 0.7,
+             size = 3) +
+  scale_color_gradient(
+    low = "#b2dfdb",   
+    high = "#b71c1c",  
+    na.value = "grey80"
+  ) + 
+  scale_x_log10() +
+  labs(
+    title = "GDP vs Maternal Mortality Ratio (2015)",
+    x = "GDP per Capita (log scale)",
+    y = "Infant Mortality Rate (per 100,000 live births)"
+  ) +
+   theme_minimal() +
+   theme(legend.position = "none")
+
+mmr_gdp_plotly <- ggplotly(mmr_gdp_plot, tooltip = c("text", "x", "y"))
+```
+
+```{r}
+country_table <- gdp_imr_mmr %>%
+  select(country, gdp_per_capita, infant_mortality_rate, maternal_mortality_ratio) %>%
+  arrange(desc(infant_mortality_rate))
+
+interactive_imr_mmr_gdp <- reactable(
+  country_table,
+  columns = list(
+    country = colDef(name = "Country"),
+    gdp_per_capita = colDef(
+      name = "GDP per Capita (USD)",
+      format = colFormat(separators = TRUE, prefix = "$")
+    ),
+    infant_mortality_rate = colDef(
+      name = "Infant Mortality Rate",
+      format = colFormat(digits = 1),
+      style = function(value) {
+        if (is.na(value)) return()
+        if (value > 50) "color: #C62828;" else if (value > 20) "color: #F9A825;" else "color: #2E7D32;"
+      }
+    ),
+    maternal_mortality_ratio = colDef(
+      name = "Maternal Mortality Ratio",
+      format = colFormat(digits = 1),
+      style = function(value) {
+        if (is.na(value)) return()
+        if (value > 300) "color: #B71C1C;" else if (value > 100) "color: #F57C00;" else "color: #388E3C;"
+      }
+    )
+  ),
+  searchable = TRUE,
+  highlight = TRUE,
+  striped = TRUE,
+  bordered = TRUE,
+  defaultPageSize = 10,
+  showPageSizeOptions = TRUE,
+  paginationType = "jump"
+)
+```
+
+# Maternal Mortality Ratio (MMR): 2015
+
+
+## Row 1 {height=25%}
+
+
+```{r}
+value_box(
+  title = "Highest Maternal Mortality Ratio",
+  value = div(
+    tags$span(style = "font-size: 32px; line-height: 1.1;", paste0(highest_mmr_value_2015, " deaths")),
+    tags$div(
+      style = "font-size: 13px; line-height: 1.1; margin-top: 2px;",
+      HTML(paste0("per 100,000 live births <i>(", highest_mmr_value_country, ")</i>"))
+    )
+  ),
+  showcase = bsicons::bs_icon("graph-up"),
+  theme = value_box_theme(bg = "#b71c1c")
+)
+
+value_box(
+  title = "Lowest Maternal Mortality Ratio",
+  value = div(
+    tags$span(style = "font-size: 32px;", paste0(lowest_mmr_value_2015, " deaths")),
+    tags$div(
+      style = "font-size: 13px; line-height: 1.2; margin-top: 2px;",
+      HTML(paste0("per 100,000 live births <i>(", lowest_mmr_value_country, ")</i>"))
+    )
+  ),
+  showcase = bsicons::bs_icon("graph-down"),
+  theme = value_box_theme(bg = "#b2dfdb")
+)
+
+value_box(
+  title = "Average Global Maternal Mortality Ratio",
+  value = div(
+    tags$span(style = "font-size: 32px;", paste0(average_global_mmr_2015, " deaths")),
+    tags$div(
+      style = "font-size: 13px; line-height: 1.2; margin-top: 2px;",
+      HTML("per 1000 live births")
+    )
+  ),
+  showcase = bsicons::bs_icon("file-medical"),
+  theme = value_box_theme(bg = "#f3b393")
+)
+```
+
+
+## Row 2 {height=75%}
+
+### {width=35%}
+
+```{r title = "Maternal Mortality Ratio: 20 Highest Countries"}
+top_20_ggplotly
+```
+
+
+### {width=50%}
+
+
+```{r title = "Global Distribution of Maternal Mortality Ratios"}
+mmr_2015_map_ggplotly
+```
+
+### {width=15%}
+
+::: {.callout-note appearance="simple"}
+
+**Summary**  
+
+- **Wide disparities**: MMR ranged from **1.3** to **561 deaths** per 100,000 live births.
+
+- **Highest**: **Liberia** (561 deaths); **lowest**: **Denmark** (1.3 deaths).
+
+- **Burden concentrated** in Sub-Saharan Africa; lowest rates in high-income countries.
+
+- **Global average**: **116 deaths**, but masks regional differences.  
+
+:::
+
+# Infant Mortality Rate (IMR): 2015
+
+## Row 1 {height=25%}
+
+```{r}
+value_box(
+  title = "Average Infant Mortality Rate",
+  value = div(
+    tags$span(style = "font-size: 32px;", paste0(average_global_imr_2015, " deaths")),
+    tags$div(
+      style = "font-size: 13px; line-height: 1.2; margin-top: 2px;",
+      HTML("per 1,000 live births")
+    )
+  ),
+  showcase = bsicons::bs_icon("file-medical"),
+  theme = value_box_theme(bg = "#90CAF9")
+)
+
+value_box(
+  title = "Highest Infant Mortality Rate",
+  value = div(
+    tags$span(style = "font-size: 32px;", paste0(highest_imr_value_2015, " deaths")),
+    tags$div(
+      style = "font-size: 13px; line-height: 1.2; margin-top: 2px;",
+      HTML(paste0("per 1,000 live births <i>(", highest_imr_value_country, ")</i>"))
+    )
+  ),
+  showcase = bsicons::bs_icon("graph-up"),
+  theme = value_box_theme(bg = "#455A64")
+)
+
+value_box(
+  title = "Lowest Infant Mortality Rate",
+  value = div(
+    tags$span(style = "font-size: 32px;", paste0(lowest_imr_value_2015, " deaths")),
+    tags$div(
+      style = "font-size: 13px; line-height: 1.2; margin-top: 2px;",
+      HTML(paste0("per 1,000 live births <i>(", lowest_imr_value_country, ")</i>"))
+    )
+  ),
+  showcase = bsicons::bs_icon("graph-down"),
+  theme = value_box_theme(bg = "#B2DFDB")
+)
+```
+
+
+## Row 2 {height=75%}
+
+### {width=60%}
+
+```{r}
+top_botton_imr_bar_chart
+```
+
+
+### {width=40%}
+
+::: {.callout-note title="Key Insights on Infant Mortality Rates"}
+
+- The **global average Infant Mortality Rate (IMR)** in 2015 was **24 deaths per 1,000 live births**.
+
+- **Angola**, **Central African Republic**, and **Sierra Leone** recorded the **highest IMRs**, exceeding **85 deaths per 1,000** indicating the Sub-Saharan African countries dominate the high IMR group.
+
+- In contrast, countries like **Luxembourg**, **Iceland**, and **Finland** reported **IMRs below 2**.
+
+- These extremes illustrate a substantial **inequality in child survival outcomes** across the world; however, the data is from 2015 that may not reflect post-COVID19 pandemic changes.
+
+:::
+
+
+# GDP Vs. Mortality Indicators (i.e., IMR & MMR) in 2015: Exploring the Link
+
+## Row 1 {height=50%}
+
+### {width=50%}
+
+```{r}
+imr_gdp_plotly
+```
+
+### {width=50%}
+
+```{r}
+mmr_gdp_plotly 
+```
+
+## Row 2 {height=50%}
+
+### {width=70%}
+
+```{r title = "Country Overview: Mortality Rates and GDP (2015)"}
+interactive_imr_mmr_gdp
+```
+
+### {width=30%}
+
+::: {.callout-note title="Summary of Observed Trends"}
+
+- Countries with **lower GDP per capita** generally show **higher infant and maternal mortality rates**.
+
+- *High-income countries* tend to cluster at the lower end of mortality rates.
+
+- The **relationship is not perfectly linear**, with a few exceptions.
+
+- **Strong inverse relationship** between GDP and IMR/MMR is visually apparent.
+
+:::
+
+# Datasets used in the Dashboard
+
+```{r title = "GDP per capita (Price and inflation adjusted)"}
+library(htmltools)
+
+htmltools::browsable(
+  tagList(reactable(
+      gdp_df,
+      elementId = "gdp_df",
+       searchable = T,
+       filterable = T
+    ),
+    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('gdp_df')"),
+  )
+)
+```
+
+```{r title = "Maternal Mortality Ratio (IHME) per 100,000 live births"}
+
+htmltools::browsable(
+  tagList(reactable(
+     maternal_mortality,
+      elementId = "maternal_mortality",
+       searchable = T,
+       filterable = T
+    ),
+    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('maternal_mortality')"),
+  )
+)
+```
+
+```{r title = "Infant Mortality Rate (IHME) per 1,000 live births"}
+
+htmltools::browsable(
+  tagList(reactable(
+     infant_mortality,
+      elementId = "infant_mortality",
+       searchable = T,
+       filterable = T
+    ),
+    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('infant_mortality')"),
+  )
+)
+```
+
+
+# Data Sources
+
+**About This Dashboard**
+This dashboard presents an analysis of key 2015 mortality indicators — Infant Mortality Rate (IMR) and Maternal Mortality Ratio (MMR) — across countries, alongside their relationship with GDP per capita for the same year. The data are sourced from the R package ‘Gapminder’, which compiles reliable global development statistics to foster a fact-based understanding of the world.
+
+
+**About Gapminder**
+The Gapminder Foundation is a respected organization that aggregates and curates data from trusted international sources such as the World Bank, World Health Organization (WHO), and UNICEF. By harmonizing these datasets into accessible formats, Gapminder supports research, education, and informed policy-making on global health and development.
+
+Explore their data repository here: https://www.gapminder.org/data/ 
+
+
+**Datasets Included**
+
+1. GDP per Capita (2015):
+Reflects the average economic output per person in US dollars, adjusted for price and inflation, offering insight into the economic well-being of countries worldwide.
+
+2. Infant Mortality Rate (2015):
+Measures the number of infant deaths (under 1 year of age) per 1,000 live births in 2015. This is a crucial indicator of child health and the quality of healthcare systems.
+
+3. Maternal Mortality Ratio (2015):
+Indicates the number of maternal deaths per 100,000 live births in 2015, reflecting maternal healthcare quality and overall health system effectiveness.Maternal deaths include any death of a woman while pregnant or within 42 days following termination of pregnancy — regardless of pregnancy duration or site — caused by pregnancy-related factors or their management, excluding accidental or incidental causes. The age range considered is 15 to 49 years.
+
+
+
